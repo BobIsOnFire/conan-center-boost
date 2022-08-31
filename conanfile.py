@@ -46,6 +46,7 @@ CONFIGURE_OPTIONS = (
     "math",
     "mpi",
     "nowide",
+    "numpy",
     "program_options",
     "python",
     "random",
@@ -147,7 +148,7 @@ class BoostConan(ConanFile):
         "system_use_utf8": False,
     }
     default_options.update({f"without_{_name}": False for _name in CONFIGURE_OPTIONS})
-    default_options.update({f"without_{_name}": True for _name in ("graph_parallel", "mpi", "python")})
+    default_options.update({f"without_{_name}": True for _name in ("graph_parallel", "mpi", "numpy", "python")})
 
     short_paths = True
     no_copy_source = True
@@ -1031,6 +1032,8 @@ class BoostConan(ConanFile):
             flags.append("variant=release")
 
         for libname in self._configure_options:
+            if libname == 'numpy':
+                continue
             if not getattr(self.options, f"without_{libname}"):
                 flags.append(f"--with-{libname}")
 
@@ -1701,7 +1704,8 @@ class BoostConan(ConanFile):
                 if not self._shared:
                     self.cpp_info.components["python"].defines.append("BOOST_PYTHON_STATIC_LIB")
 
-                self.cpp_info.components[f"numpy{pyversion.major}{pyversion.minor}"].requires = ["numpy"]
+                if not self.options.without_numpy:
+                    self.cpp_info.components[f"numpy{pyversion.major}{pyversion.minor}"].requires = ["numpy"]
 
             if self._is_msvc or self._is_clang_cl:
                 # https://github.com/conan-community/conan-boost/issues/127#issuecomment-404750974
